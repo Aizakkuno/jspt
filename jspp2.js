@@ -69,52 +69,55 @@ const none = (value) => {
 const getType = (value) => {
     const valueObjType = typeof(value);
 
-    if (valueObjType == "string") {
+    if (value.constructor == String) {
         return str;
-    } else if (valueObjType == "boolean") {
+    } else if (value.constructor == Boolean) {
         return bool;
-    } else if (valueObjType == "function") {
+    } else if (value.constructor == Function) {
         return func;
-    } else if (valueObjType == "undefined") {
+    } else if (value == undefined || value == null) {
         return none;
-    } else if (valueObjType == "number") {
+    } else if (value.constructor == Number) {
         return value == int(value) ? int : float;
-    } else if (valueObjType == "object") {
-        if (value.constructor == Object) {
-            return dict;
-        } else if (value.constructor == Array) {
-            return list;
-        } else {
-            return value.constructor;
-        }
+    } else if (value.constructor == Object) {
+        return dict;
+    } else if (value.constructor == Array) {
+        return list;
+    } else {
+        return obj;
     }
 }
 
 const isInstance = (value, typeOrList) => {
     if (getType(typeOrList) == list) {
+        let flag = false;
+
         for (const listType of typeOrList) {
-            if (listType == getType(value)) {
-                return true;
+            if ((getType(value) == obj && value instanceof listType) ||
+                listType == getType(value)) {
+
+                return true
             }
         }
 
         return false;
     } else {
-        return getType(value) == typeOrList;
+        return ((getType(value) == obj && value instanceof typeOrList) ||
+                getType(value) == typeOrList);
     }
 }
 
 Object.prototype.items = function() {
-    if (!isInstance(this, dict)) {
-        throw new Error(".items can only be called on dict!");
+    if (!isInstance(this, [list, dict])) {
+        throw new Error(".items can only be called on list/dict!");
     }
 
     return Object.entries(this);
 }
 
 Object.prototype.keys = function() {
-    if (!isInstance(this, dict)) {
-        throw new Error(".items can only be called on dict!");
+    if (!isInstance(this, [list, dict])) {
+        throw new Error(".keys can only be called on list/dict!");
     }
 
     return Object.keys(this);
@@ -128,16 +131,16 @@ Object.prototype.values = function() {
     return Object.values(this);
 }
 
-Object.prototype.in = function(valueList) {
-    if (!isInstance(valueList, list)) {
-        if (isInstance(valueList, [dict, str])) {
-            valueList = list(valueList);
-        } else {
-            throw new Error("valueList must be a list!");
-        }
+Object.prototype.in = function(iterable) {
+    if (isInstance(iterable, str)) {
+        return iterable.includes(this);
+    } else if (isInstance(iterable, dict)) {
+        iterable = list(iterable);
+    } else if (!isInstance(iterable, list)) {
+        throw new Error("iterable must be an iterable!");
     }
 
-    for (const value of valueList) {
+    for (const value of iterable) {
         if (this == value) {
             return true;
         }
@@ -147,22 +150,122 @@ Object.prototype.in = function(valueList) {
 }
 
 Object.prototype.contains = function(value) {
-    let iterableThis;
-    if (!isInstance(this, list)) {
-        if (isInstance(this, [dict, str])) {
-            iterableThis = list(this);
-        } else {
-            throw new Error(".contains can only be called on iterables!");
-        }
+    if (isInstance(this, dict)) {
+        iterableThis = list(this);
+
+        return iterableThis.includes(value);
     } else {
-        iterableThis = this;
+        return this.includes(value);
+    }
+}
+
+// Object.prototype.contains = function(...values) {
+//     let iterableThis;
+//     if (!isInstance(this, list)) {
+//         if (isInstance(this, [dict, str])) {
+//             iterableThis = list(this);
+//         } else {
+//             throw new Error(".contains can only be called on iterables!");
+//         }
+//     } else {
+//         iterableThis = this;
+//     }
+
+//     console.log(iterableThis)
+
+//     const fulfilledValues = [];
+
+//     for (const iteratedValue of iterableThis) {
+//         if (iteratedValue.in(values)) {
+//             fulfilledValues.append(iteratedValue);
+//         }
+//     }
+
+//     return fulfilledValues.length == values.length;
+// }
+
+Object.prototype.removeKey = function(...keys) {
+    if (!isInstance(this, dict)) {
+        throw new Error(".removeKey can only be called on dict!");
     }
 
-    for (const iteratedValue of iterableThis) {
-        if (iteratedValue == value) {
+    const newDict = {};
+    const removedKeys = [];
+
+    for (const [key, value] of this.items()) {
+        if (key.in(keys)) {
+            removedKeys.append(key)
+        } else {
+            newDict[key] = value;
+        }
+    }
+
+    return newDict;
+}
+
+Object.prototype.removeValue = function(...values) {
+    if (!isInstance(this, dict)) {
+        throw new Error(".removeValue can only be called on dict!");
+    }
+
+    const newDict = {};
+    const removedValues = [];
+
+    for (const [key, value] of this.items()) {
+        if (value.in(values)) {
+            removedValues.append(value)
+        } else {
+            newDict[key] = value;
+        }
+    }
+
+    return newDict;
+}
+
+Array.prototype.removeIndex = function(...indexes) {
+    if (!isInstance(this, list)) {
+        throw new Error(".removeIndex can only be called on list!");
+    }
+
+    const newList = [];
+    const removedIndexes = [];
+
+    for (const [index, value] of this.items()) {
+        if (index.in(indexes)) {
+            removedIndexes.append(index)
+        } else {
+            newList.append(value);
+        }
+    }
+
+    return newList;
+}
+
+Array.prototype.remove = function(...values) {
+    if (!isInstance(this, list)) {
+        throw new Error(".remove can only be called on list!");
+    }
+
+    const newList = [];
+    const removedValues = [];
+
+    for (const value of this) {
+        if (value.in(values)) {
+            removedValues.append(value)
+        } else {
+            newList.append(value);
+        }
+    }
+
+    return newList;
+}
+
+Array.prototype.append = Array.prototype.push;
+
+const blockUntilReady = () => {
+    while (true) {
+        if (document.readyState == "complete") {
             return true;
         }
     }
-
-    return false;
 }
