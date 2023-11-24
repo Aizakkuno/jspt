@@ -67,16 +67,14 @@ const none = (value) => {
 }
 
 const getType = (value) => {
-    const valueObjType = typeof(value);
-
-    if (value.constructor == String) {
+    if (value == undefined || value == null) {
+        return none;
+    } else if (value.constructor == String) {
         return str;
     } else if (value.constructor == Boolean) {
         return bool;
     } else if (value.constructor == Function) {
         return func;
-    } else if (value == undefined || value == null) {
-        return none;
     } else if (value.constructor == Number) {
         return value == int(value) ? int : float;
     } else if (value.constructor == Object) {
@@ -262,10 +260,16 @@ Array.prototype.remove = function(...values) {
 
 Array.prototype.append = Array.prototype.push;
 
-const blockUntilReady = () => {
-    while (true) {
-        if (document.readyState == "complete") {
-            return true;
+const elements = {}
+
+const loadIDInterval = setInterval(() => {
+    if (document.readyState == "complete") {
+        const allElements = document.querySelectorAll('*[id]');
+
+        for (const element of allElements) {
+            elements[element.id] = element;
         }
+
+        clearInterval(loadIDInterval);
     }
-}
+}, 100);
