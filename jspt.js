@@ -275,14 +275,14 @@ Array.prototype.remove = function(...values) {
 
 Array.prototype.append = Array.prototype.push;
 
-const elements = {}
+window.elements = {}
 
 const loadIDInterval = setInterval(() => {
     if (document.readyState == "complete") {
         const allElements = document.querySelectorAll('*[id]');
 
         for (const element of allElements) {
-            elements[element.id] = element;
+            window.elements[element.id] = element;
         }
 
         clearInterval(loadIDInterval);
