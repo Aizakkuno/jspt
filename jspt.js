@@ -1,71 +1,3 @@
-const str = (value) => {
-    if (value.constructor == Array || value.constructor == Object) {
-        return JSON.stringify(value);
-    } else {
-        return String(value);
-    }
-}
-
-const int = (value) => {
-    return parseInt(value);
-}
-
-const float = (value) => {
-    return parseFloat(value);
-}
-
-const dict = (value) => {
-    if (bool(value) && typeof(value) != "object") {
-        value = JSON.parse(value);
-    }
-
-    if (value.constructor != Object) {
-        throw new Error("Value is not a dictionary!");
-    }
-
-    return value;
-}
-
-const list = (value) => {
-    if (value.constructor != String && typeof(value) != "object") {
-        value = JSON.parse(value);
-    }
-
-    if (value.constructor == Array) {
-        return value;
-    } else if (value.constructor == Object) {
-        return Object.values(value);
-    } else if (value.constructor == String) {
-        return value.split("");
-    } else {
-        throw new Error("Value is not a list/array!");
-    }
-}
-
-const bool = (value) => {
-    return Boolean(value);
-}
-
-const func = (value) => {
-    if (value.constructor != Function) {
-        throw new Error("Value must be a function!");
-    }
-
-    return value;
-}
-
-const obj = (value) => {
-    if (typeof(value) != "object") {
-        throw new Error("Value must be a class object/instance!");
-    }
-
-    return value;
-}
-
-const none = (value) => {
-    return null;
-}
-
 const getType = (value) => {
     if (value == undefined || value == null) {
         return none;
@@ -86,23 +18,106 @@ const getType = (value) => {
     }
 }
 
+const isInstanceBasic = (value, valueType) => {
+    return ((getType(value) == obj && value instanceof valueType) ||
+            getType(value) == valueType);
+}
+
 const isInstance = (value, typeOrList) => {
     if (getType(typeOrList) == list) {
-        let flag = false;
-
         for (const listType of typeOrList) {
-            if ((getType(value) == obj && value instanceof listType) ||
-                listType == getType(value)) {
-
-                return true
+            if (isInstanceBasic(value, listType)) {
+                return true;
             }
         }
 
         return false;
     } else {
-        return ((getType(value) == obj && value instanceof typeOrList) ||
-                getType(value) == typeOrList);
+        return isInstanceBasic(value, typeOrList);
     }
+}
+
+const str = (value) => {
+    if (isInstance(value, [list, dict])) {
+        return JSON.stringify(value);
+    } else {
+        return String(value);
+    }
+}
+
+const int = (value) => {
+    if (!isInstance(value, [str, float, int])) {
+        throw new Error("Value is not of a parseable type (str, float, "
+                        + "int)!");
+    }
+
+    return parseInt(value);
+}
+
+const float = (value) => {
+    if (!isInstance(value, [str, float, int])) {
+        throw new Error("Value is not of a parseable type (str, float, "
+                        + "int)!");
+    }
+
+    return parseFloat(value);
+}
+
+const dict = (value) => {
+    if (isInstance(value, str)) {
+        try {
+            value = JSON.parse(value);
+        } catch (error) {
+            throw new Error("Value is not JSON serializable!");
+        }
+    }
+
+    if (!isInstance(value, dict)) {
+        throw new Error("Value is not a dictionary!");
+    }
+
+    return value;
+}
+
+const list = (value) => {
+    if (isInstance(value, str)) {
+        try {
+            return JSON.parse(value);
+        } catch (error) {
+            return value.split("");
+        }
+    } else if (isInstance(value, dict)) {
+        return Object.values(value);
+    } else if (isInstance(value, list)) {
+        return value;
+    }
+
+    throw new Error("Value is not a list/cannot be converted to a list!");
+
+}
+
+const bool = (value) => {
+    return Boolean(value);
+}
+
+const func = (value) => {
+    if (!isInstance(value, func)) {
+        throw new Error("Value must be a function!");
+    }
+
+    return value;
+}
+
+const obj = (value) => {
+    if (!isInstance(value, obj)) {
+        throw new Error("Value must be a class object/instance!");
+    }
+
+    return value;
+}
+
+const none = (value) => {
+    return null;
 }
 
 Object.prototype.items = function() {
