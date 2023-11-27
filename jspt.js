@@ -80,20 +80,19 @@ const dict = (value) => {
 }
 
 const list = (value) => {
-    if (isInstance(value, str)) {
-        try {
-            return JSON.parse(value);
-        } catch (error) {
-            return value.split("");
-        }
-    } else if (isInstance(value, dict)) {
+    if (isInstance(value, dict)) {
         return Object.values(value);
     } else if (isInstance(value, list)) {
         return value;
+    } else {
+        try {
+            return JSON.parse(value);
+        } catch (error) {
+            return str(value).split("");
+        }
     }
 
-    throw new Error("Value is not a list/cannot be converted to a list!");
-
+    // throw new Error("Value is not a list/cannot be converted to a list!");
 }
 
 const bool = (value) => {
@@ -277,7 +276,7 @@ Array.prototype.append = Array.prototype.push;
 
 window.elements = {}
 
-const loadIDInterval = setInterval(() => {
+const loadInterval = setInterval(() => {
     if (document.readyState == "complete") {
         const allElements = document.querySelectorAll('*[id]');
 
@@ -285,6 +284,10 @@ const loadIDInterval = setInterval(() => {
             window.elements[element.id] = element;
         }
 
-        clearInterval(loadIDInterval);
+        if (window.main && isInstance(window.main, func)) {
+            window.main();
+        }
+
+        clearInterval(loadInterval);
     }
 }, 100);
