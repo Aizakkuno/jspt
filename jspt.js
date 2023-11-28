@@ -272,7 +272,33 @@ Array.prototype.remove = function(...values) {
     return newList;
 }
 
+Array.prototype.asString = function() {
+    let newString = "";
+
+    for (const value of this) {
+        newString += str(value);
+    }
+
+    return newString;
+}
+
 Array.prototype.append = Array.prototype.push;
+
+String.prototype.join = function(...values) {
+    const newString = this;
+
+    for (const value of values) {
+        if (isInstance(value, list)) {
+            for (const listValue of value) {
+                newString += str(listValue);
+            }
+        } else {
+            newString += str(value);
+        }
+    }
+
+    return newString;
+}
 
 window.elements = {}
 
