@@ -6,7 +6,7 @@ const ptype = (value) => {
     } else if (value.constructor === Boolean) {
         return bool;
     } else if (value.constructor === Function) {
-        if (value.in(ptypes)) {
+        if (ptypes.includes(value)) {
             return ptype;
         } else {
             return func;
@@ -18,12 +18,12 @@ const ptype = (value) => {
     } else if (value.constructor === Array) {
         return list;
     } else {
-        return obj;
+        return object;
     }
 }
 
 const isInstanceBasic = (value, valueType) => {
-    return ((ptype(value) === obj && value instanceof valueType) ||
+    return ((ptype(value) === object && value instanceof valueType) ||
             ptype(value) === valueType);
 }
 
@@ -57,7 +57,7 @@ const int = (value) => {
                         + "int, bool, none)!");
     }
 
-    return parseInt(value);
+    return parseInt(value) || 0;
 }
 
 const float = (value) => {
@@ -66,10 +66,14 @@ const float = (value) => {
                         + "int, bool, none)!");
     }
 
-    return parseFloat(value);
+    return parseFloat(value) || 0.0;
 }
 
 const dict = (value) => {
+    if (isInstance(value, none)) {
+        return {};
+    }
+
     if (isInstance(value, str)) {
         try {
             value = JSON.parse(value);
@@ -90,6 +94,8 @@ const list = (value) => {
         return Object.values(value);
     } else if (isInstance(value, list)) {
         return value;
+    } else if (isInstance(value, none)) {
+        return {};
     } else {
         try {
             return JSON.parse(value);
@@ -111,8 +117,12 @@ const func = (value) => {
     return value;
 }
 
-const obj = (value) => {
-    if (!isInstance(value, obj)) {
+const object = (value) => {
+    if (isInstance(value, none)) {
+        return Object();
+    }
+
+    if (!isInstance(value, object)) {
         throw new Error("Value must be a class object/instance!");
     }
 
@@ -123,7 +133,7 @@ const none = (value) => {
     return null;
 }
 
-const ptypes = [str, int, float, dict, list, bool, func, obj, none, ptype];
+const ptypes = [str, int, float, dict, list, bool, func, object, none, ptype];
 
 Object.prototype.items = function() {
     if (!isInstance(this, [list, dict])) {
