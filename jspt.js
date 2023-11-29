@@ -1,17 +1,21 @@
-const getType = (value) => {
-    if (value == undefined || value == null) {
+const ptype = (value) => {
+    if (value === undefined || value === null) {
         return none;
-    } else if (value.constructor == String) {
+    } else if (value.constructor === String) {
         return str;
-    } else if (value.constructor == Boolean) {
+    } else if (value.constructor === Boolean) {
         return bool;
-    } else if (value.constructor == Function) {
-        return func;
-    } else if (value.constructor == Number) {
+    } else if (value.constructor === Function) {
+        if (value.in(ptypes)) {
+            return ptype;
+        } else {
+            return func;
+        }
+    } else if (value.constructor === Number) {
         return value == int(value) ? int : float;
-    } else if (value.constructor == Object) {
+    } else if (value.constructor === Object) {
         return dict;
-    } else if (value.constructor == Array) {
+    } else if (value.constructor === Array) {
         return list;
     } else {
         return obj;
@@ -19,12 +23,12 @@ const getType = (value) => {
 }
 
 const isInstanceBasic = (value, valueType) => {
-    return ((getType(value) == obj && value instanceof valueType) ||
-            getType(value) == valueType);
+    return ((ptype(value) === obj && value instanceof valueType) ||
+            ptype(value) === valueType);
 }
 
 const isInstance = (value, typeOrList) => {
-    if (getType(typeOrList) == list) {
+    if (isInstanceBasic(typeOrList, list)) {
         for (const listType of typeOrList) {
             if (isInstanceBasic(value, listType)) {
                 return true;
@@ -40,24 +44,26 @@ const isInstance = (value, typeOrList) => {
 const str = (value) => {
     if (isInstance(value, [list, dict])) {
         return JSON.stringify(value);
+    } else if (isInstance(value, ptype)) {
+        return String(value).split(" ")[1].replace("()", "");
     } else {
         return String(value);
     }
 }
 
 const int = (value) => {
-    if (!isInstance(value, [str, float, int])) {
+    if (!isInstance(value, [str, float, int, bool, none])) {
         throw new Error("Value is not of a parseable type (str, float, "
-                        + "int)!");
+                        + "int, bool, none)!");
     }
 
     return parseInt(value);
 }
 
 const float = (value) => {
-    if (!isInstance(value, [str, float, int])) {
+    if (!isInstance(value, [str, float, int, bool, none])) {
         throw new Error("Value is not of a parseable type (str, float, "
-                        + "int)!");
+                        + "int, bool, none)!");
     }
 
     return parseFloat(value);
@@ -91,8 +97,6 @@ const list = (value) => {
             return str(value).split("");
         }
     }
-
-    // throw new Error("Value is not a list/cannot be converted to a list!");
 }
 
 const bool = (value) => {
@@ -118,6 +122,8 @@ const obj = (value) => {
 const none = (value) => {
     return null;
 }
+
+const ptypes = [str, int, float, dict, list, bool, func, obj, none, ptype];
 
 Object.prototype.items = function() {
     if (!isInstance(this, [list, dict])) {
@@ -153,7 +159,7 @@ Object.prototype.in = function(iterable) {
     }
 
     for (const value of iterable) {
-        if (this == value) {
+        if (this === value) {
             return true;
         }
     }
@@ -170,31 +176,6 @@ Object.prototype.contains = function(value) {
         return this.includes(value);
     }
 }
-
-// Object.prototype.contains = function(...values) {
-//     let iterableThis;
-//     if (!isInstance(this, list)) {
-//         if (isInstance(this, [dict, str])) {
-//             iterableThis = list(this);
-//         } else {
-//             throw new Error(".contains can only be called on iterables!");
-//         }
-//     } else {
-//         iterableThis = this;
-//     }
-
-//     console.log(iterableThis)
-
-//     const fulfilledValues = [];
-
-//     for (const iteratedValue of iterableThis) {
-//         if (iteratedValue.in(values)) {
-//             fulfilledValues.append(iteratedValue);
-//         }
-//     }
-
-//     return fulfilledValues.length == values.length;
-// }
 
 Object.prototype.removeKey = function(...keys) {
     if (!isInstance(this, dict)) {
@@ -303,7 +284,7 @@ String.prototype.join = function(...values) {
 window.elements = {}
 
 const loadInterval = setInterval(() => {
-    if (document.readyState == "complete") {
+    if (document.readyState === "complete") {
         const allElements = document.querySelectorAll('*[id]');
 
         for (const element of allElements) {
