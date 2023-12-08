@@ -106,10 +106,8 @@ const list = (value) => {
 }
 
 const bool = (value) => {
-    if (isInstance(value, list)) {
-        return value.length > 0;
-    } else if (isInstance(value, dict)) {
-        return Object.keys(value).length > 0;
+    if (!isInstance(value, [str, list, dict])) {
+        return list(value).length > 0;
     } else {
         return Boolean(value);
     }
