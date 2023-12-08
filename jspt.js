@@ -139,9 +139,9 @@ const none = (value) => {
 
 const ptypes = [str, int, float, dict, list, bool, func, object, none, ptype];
 
-Object.prototype.items = function() {
+Object.prototype.entries = function() {
     if (!isInstance(this, [list, dict])) {
-        throw new Error(".items can only be called on list/dict!");
+        throw new Error(".entries can only be called on list/dict!");
     }
 
     return Object.entries(this);
@@ -156,8 +156,8 @@ Object.prototype.keys = function() {
 }
 
 Object.prototype.values = function() {
-    if (!isInstance(this, dict)) {
-        throw new Error(".items can only be called on dict!");
+    if (!isInstance(this, [list, dict])) {
+        throw new Error(".values can only be called on list/dict!");
     }
 
     return Object.values(this);
@@ -199,7 +199,7 @@ Object.prototype.removeKey = function(...keys) {
     const newDict = {};
     const removedKeys = [];
 
-    for (const [key, value] of this.items()) {
+    for (const [key, value] of this.entries()) {
         if (key.in(keys)) {
             removedKeys.append(key)
         } else {
@@ -218,7 +218,7 @@ Object.prototype.removeValue = function(...values) {
     const newDict = {};
     const removedValues = [];
 
-    for (const [key, value] of this.items()) {
+    for (const [key, value] of this.entries()) {
         if (value.in(values)) {
             removedValues.append(value)
         } else {
@@ -229,6 +229,14 @@ Object.prototype.removeValue = function(...values) {
     return newDict;
 }
 
+// Object.prototype.asChars = function() {
+//     let iterableThis;
+
+//     if (!isInstance(this, [list, dict])) {
+
+//     }
+// }
+
 Array.prototype.removeIndex = function(...indexes) {
     if (!isInstance(this, list)) {
         throw new Error(".removeIndex can only be called on list!");
@@ -237,7 +245,7 @@ Array.prototype.removeIndex = function(...indexes) {
     const newList = [];
     const removedIndexes = [];
 
-    for (const [index, value] of this.items()) {
+    for (const [index, value] of this.entries()) {
         if (index.in(indexes)) {
             removedIndexes.append(index)
         } else {
