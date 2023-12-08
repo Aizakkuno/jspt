@@ -12,7 +12,7 @@ const ptype = (value) => {
             return func;
         }
     } else if (value.constructor === Number) {
-        return value == int(value) ? int : float;
+        return value == Number.isInteger(value) ? int : float;
     } else if (value.constructor === Object) {
         return dict;
     } else if (value.constructor === Array) {
